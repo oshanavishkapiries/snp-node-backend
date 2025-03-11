@@ -1,0 +1,59 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+debug.log
+stacktrace.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Production build
+dist/
+build/
+
+# Cache and temporary files
+.cache/
+.tmp/
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Test coverage reports
+coverage/
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.iml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Lint and formatting reports
+.eslintcache
+.prettiercache
+
+# Jest cache and output
+jest/
+.jest/
+
+# S3 log uploads
+logs/*.log
+
+# Firebase and Redis secrets (if applicable)
+firebase-debug.log
+firebase-debug.log.*
+
+# Misc
+*.bak
