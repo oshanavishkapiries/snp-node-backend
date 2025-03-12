@@ -4,6 +4,7 @@ const router = express.Router();
 
 
 router.post('/signup', AuthController.registerUser);
+router.get('/auth-data', AuthController.authData);
 router.post('/login', AuthController.loginUser);
 router.post('/verify-mobile', AuthController.verifyMobileNumber);
 router.post('/reset-password-request', AuthController.requestPasswordReset);

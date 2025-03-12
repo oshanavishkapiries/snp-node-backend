@@ -3,36 +3,42 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // await queryInterface.sequelize.query(
+    //   "CREATE TYPE enum_users_role AS ENUM ('DESIGNER', 'CUTTER', 'PRINTER', 'ACCOUNTANT', 'PRESSER', 'CLIENT', 'ADMIN');",
+    //   "CREATE TYPE enum_users_mode AS ENUM ('LIGHT', 'DARK');",
+    //   "CREATE TYPE enum_users_size_chart_type AS ENUM ('TYPE_ONE', 'TYPE_TWO');",
+    // );
     await queryInterface.createTable("users", {
       id: {
-        type: Sequelize.STRING,
+        type: Sequelize.INTEGER,
         primaryKey: true,
-        defaultValue: Sequelize.UUIDV4,
+        autoIncrement: true,
       },
       email: {
-        type: Sequelize.STRING,
-        allowNull: false,
+        type: Sequelize.STRING(120),
+        allowNull: true,
         unique: true,
       },
       full_name: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(160),
         allowNull: false,
       },
       password: {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      phone_number: {
+        type: Sequelize.STRING(15),
+        allowNull: false,
+        unique: true,
+      },
       country_code: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(5),
         allowNull: false,
       },
       dial_code: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      phone_number: {
-        type: Sequelize.STRING,
-        allowNull: false,
+        type: Sequelize.STRING(5),
+        allowNull: true,
       },
       role: {
         type: Sequelize.ENUM(
@@ -45,6 +51,7 @@ module.exports = {
           "ADMIN"
         ),
         allowNull: false,
+        defaultValue: "CLIENT",
       },
       mode: {
         type: Sequelize.ENUM("LIGHT", "DARK"),
@@ -66,6 +73,14 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         defaultValue: true,
       },
+      is_account_verified: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true,
+      },
+      is_active: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true,
+      },
       created_at: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
@@ -74,11 +89,14 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
       },
-      is_active: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true,
-      },
     });
+
+    // Indexes for phone_number and role
+    await queryInterface.addIndex("users", ["phone_number"], {
+      unique: true,
+    });
+    await queryInterface.addIndex("users", ["role"]);
+
   },
 
   async down(queryInterface, Sequelize) {

@@ -1,9 +1,13 @@
 import { getSequelize } from '../config/database.js';
 import User from './User.js';
+import Order from './Order.js';
+import OrderSize from './OrderSize.js';
 
 // Add all models here
 const models = {
-  User
+  User,
+  Order,
+  OrderSize
 };
 
 export const initializeModels = async () => {

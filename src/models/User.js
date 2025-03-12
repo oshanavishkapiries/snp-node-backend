@@ -5,9 +5,9 @@ class User extends Model {
     User.init(
       {
         id: {
-          type: DataTypes.UUID,
+          type: DataTypes.INTEGER,
           primaryKey: true,
-          defaultValue: DataTypes.UUIDV4,
+          autoIncrement: true,
         },
         email: {
           type: DataTypes.STRING(120),
@@ -68,6 +68,10 @@ class User extends Model {
           type: DataTypes.BOOLEAN,
           defaultValue: true,
         },
+        is_account_verified: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: true,
+        },
         is_active: {
           type: DataTypes.BOOLEAN,
           defaultValue: true,
@@ -99,7 +103,7 @@ class User extends Model {
   }
 
   static associate(models) {
-    // Define associations here
+    this.hasMany(models.Order, { foreignKey: "created_by" });
   }
 }
 

@@ -31,16 +31,24 @@ export const AuthService = {
       role,
     } = dto;
     try {
-      // Check if user already exists
-      const existingUser = await User.findOne({
-        where: { phone_number },
-        attributes: ["id", "is_active"],
+      // Check if phone number already exists
+      const existingPhoneUser = await User.findOne({
+        where: { phone_number, is_active: true },
+        attributes: ["id"],
       });
-      if (existingUser) {
-        if (!existingUser.is_active) {
-          throw new BadRequestError("Please verify your mobile number");
-        }
-        throw new BadRequestError("User already exists.");
+
+      if (existingPhoneUser) {
+        throw new BadRequestError("Phone number already exists.");
+      }
+
+      // Check if email already exists
+      const existingEmailUser = await User.findOne({
+        where: { email, is_active: true },
+        attributes: ["id"],
+      });
+
+      if (existingEmailUser) {
+        throw new BadRequestError("Email already exists.");
       }
 
       // Hash password
@@ -49,9 +57,9 @@ export const AuthService = {
       // Generate verification code
       // const verificationCode = generateVerificationCode();
       const verificationCode = "123456";
-
+      console.log(verificationCode);
       const hashedVerificationCode = await hashPassword(verificationCode);
-
+      console.log(hashedVerificationCode);
       // Create user
       const user = await User.create({
         full_name,
@@ -63,10 +71,11 @@ export const AuthService = {
         mode: "LIGHT",
         size_chart_type: "TYPE_ONE",
         is_first_login: true,
+        is_account_verified: false,
         password: hashedPassword,
         verification_code: hashedVerificationCode,
         verification_code_generated_date_time: new Date(),
-        is_active: false,
+        is_active: true,
       });
 
       // Send verification SMS
@@ -78,7 +87,11 @@ export const AuthService = {
       return {
         success: true,
         message: "User created successfully",
-        data: { userId: user.id },
+        data: {
+          userId: user.id,
+          is_first_login: user.is_first_login,
+          is_account_verified: user.is_account_verified,
+        },
       };
     } catch (error) {
       logger.error("Error creating user:", error);
@@ -100,7 +113,7 @@ export const AuthService = {
     try {
       // Find user
       const user = await User.findOne({
-        where: { phone_number },
+        where: { phone_number, is_active: true },
         attributes: [
           "id",
           "password",
@@ -110,12 +123,11 @@ export const AuthService = {
           "dial_code",
           "role",
           "is_first_login",
+          "is_account_verified",
           "is_active",
         ],
       });
       if (!user) throw new UnauthorizedError("Invalid credentials");
-      if (!user.is_active)
-        throw new UnauthorizedError("Please verify your mobile number");
 
       // Verify password
       const isValidPassword = await bcrypt.compare(password, user.password);
@@ -134,6 +146,9 @@ export const AuthService = {
           country_code: user.country_code,
           dial_code: user.dial_code,
           role: user.role,
+          is_first_login: user.is_first_login,
+          is_account_verified: user.is_account_verified,
+          is_active: user.is_active,
         },
       };
     } catch (error) {
@@ -154,15 +169,21 @@ export const AuthService = {
   async verifyMobileNumber(dto) {
     const { userId, code } = dto;
     try {
-      const user = await User.findByPk(userId);
+      const user = await User.findOne({
+        where: { id:userId, is_active: true },
+      });
       if (!user) throw new NotFoundError("User not found");
       if (isVerificationCodeExpired(user.verification_code_generated_date_time))
         throw new BadRequestError("Verification code expired");
-      if (!(await bcrypt.compare(user.verification_code, code)))
+
+      if (!(await bcrypt.compare(code.toString(), user.verification_code))) {
         throw new BadRequestError("Invalid verification code");
+      }
 
       await user.update({
         is_active: true,
+        is_account_verified: true,
+        is_first_login: false,
         verification_code: null,
         verification_code_generated_date_time: null,
       });
@@ -186,7 +207,7 @@ export const AuthService = {
     const { phone_number } = dto;
     try {
       const user = await User.findOne({
-        where: { phone_number },
+        where: { phone_number, is_active: true },
         attributes: ["id"],
       });
       if (!user) throw new NotFoundError("User not found");
@@ -227,7 +248,9 @@ export const AuthService = {
   async resetPassword(dto) {
     const { userId, code, newPassword } = dto;
     try {
-      const user = await User.findByPk(userId);
+      const user = await User.findOne({
+        where: { id:userId, is_active: true },
+      });
       if (!user) throw new NotFoundError("User not found");
       if (isVerificationCodeExpired(user.verification_code_generated_date_time))
         throw new BadRequestError("Verification code expired");
@@ -252,6 +275,30 @@ export const AuthService = {
         throw error;
       }
       throw new InternalServerError("Password reset failed.");
+    }
+  },
+
+    /** Auth  */
+  async authData(dto) {
+    const { userId } = dto;
+    try {
+      const user = await User.findOne({
+        where: { id:userId, is_active: true },
+      });
+      if (!user) throw new NotFoundError("User not found");
+      
+      return { success: true, message: "Auth data fetched successfully", data: user };
+    } catch (error) {
+      logger.error("Password reset error:", error);
+      if (
+        error instanceof NotFoundError ||
+        error instanceof BadRequestError ||
+        error instanceof UnauthorizedError ||
+        error instanceof UnauthorizedError
+      ) {
+        throw error;
+      }
+      throw new InternalServerError("Auth data retrieve failed.");
     }
   },
 };

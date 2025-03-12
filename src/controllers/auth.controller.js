@@ -26,7 +26,7 @@ export const AuthController = {
       dial_code,
       role,
     } = req.body;
-    
+
     try {
       if (
         !full_name ||
@@ -114,6 +114,22 @@ export const AuthController = {
       }
 
       const response = await AuthService.resetPassword(req.body);
+      return successResponse(res, response.message, response.data);
+    } catch (error) {
+      return handleErrorResponse(res, error);
+    }
+  },
+
+  /** Auth */
+  async authData(req, res) {
+    try {
+      const { userId } = req.query;
+
+      if (!userId) {
+        return badRequestResponse(res, "User ID is required!");
+      }
+
+      const response = await AuthService.authData(req.query);
       return successResponse(res, response.message, response.data);
     } catch (error) {
       return handleErrorResponse(res, error);
